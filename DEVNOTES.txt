@@ -1,0 +1,7 @@
+
+
+* Build Auth using Clerk for Next.js
+   *  Turn on other popular social Auth
+
+
+
