@@ -79,7 +79,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             router.push(`/events/${newEvent._id}`)
           }
         } catch (error) {
-          //console.log(error);
+          console.log(error);
         }
       }
 
@@ -101,7 +101,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             router.push(`/events/${updatedEvent._id}`)
           }
         } catch (error) {
-          // console.log(error);
+          console.log(error);
         }
       }
     }
