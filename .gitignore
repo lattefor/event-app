@@ -37,3 +37,6 @@ next-env.d.ts
 
 # vs
 .vscode/*
+
+#local old readme
+save-README.md

@@ -38,7 +38,8 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
     ? { 
       ...event, 
       startDateTime: new Date(event.startDateTime), 
-      endDateTime: new Date(event.endDateTime) 
+      endDateTime: new Date(event.endDateTime),
+      categoryId: event.category._id
     }
     : eventDefaultValues;
 
@@ -131,7 +132,6 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
               <FormItem className="w-full">
                 <FormControl>
                   <Dropdown onChangeHandler={field.onChange} value={field.value} />
-                 
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -23,7 +23,7 @@ const getCategoryByName = async (name: string) => {
 
 const populateEvent = (query: any) => {
   return query
-    .populate({ path: 'organizer', model: User, select: '_id firstName lastName' })
+    .populate({ path: 'organizer', model: User, select: '_id firstName lastName clerkId' })
     .populate({ path: 'category', model: Category, select: '_id name' })
 }
 
@@ -32,10 +32,13 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
   try {
     await connectToDatabase()
 
-    const organizer = await User.findById(userId)
-    if (!organizer) throw new Error('Organizer not found')
+    // Find user by clerkId instead of MongoDB _id
+    const organizer = await User.findOne({ clerkId: userId })
+    if (!organizer) {
+      throw new Error('User not found. Please refresh the page and try again.')
+    }
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: userId })
+    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: organizer._id })
     revalidatePath(path)
 
     return JSON.parse(JSON.stringify(newEvent))
@@ -64,8 +67,14 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
     await connectToDatabase()
 
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      throw new Error('User not found')
+    }
+
     const eventToUpdate = await Event.findById(event._id)
-    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
+    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== user._id.toHexString()) {
       throw new Error('Unauthorized or event not found')
     }
 
@@ -74,9 +83,14 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       { ...event, category: event.categoryId },
       { new: true }
     )
+    
+    // Populate the updated event with organizer and category info
+    const populatedEvent = await populateEvent(Event.findById(updatedEvent._id))
     revalidatePath(path)
 
-    return JSON.parse(JSON.stringify(updatedEvent))
+    // Uncomment and use console.dir for better object logging
+    // console.dir(populatedEvent, { depth: null, colors: true });
+    return JSON.parse(JSON.stringify(populatedEvent))
   } catch (error) {
     handleError(error)
   }
@@ -128,7 +142,13 @@ export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUs
   try {
     await connectToDatabase()
 
-    const conditions = { organizer: userId }
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      return { data: [], totalPages: 0 }
+    }
+
+    const conditions = { organizer: user._id }
     const skipAmount = (page - 1) * limit
 
     const eventsQuery = Event.find(conditions)

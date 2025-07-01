@@ -4,6 +4,7 @@ import {
   ClerkProvider
 } from '@clerk/nextjs'
 import './globals.css';
+import UserCreator from '@/components/shared/UserCreator';
 
 
 const poppins = Poppins({
@@ -29,7 +30,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={poppins.variable}>{children}</body>
+        <body className={poppins.variable}>
+          <UserCreator />
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   )

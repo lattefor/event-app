@@ -8,13 +8,21 @@ export const connectToDatabase = async () => {
   if (cached.conn) return cached.conn;
 
   if(!MONGODB_URI) throw new Error('MONGODB_URI is missing');
+  
+  console.log('Connecting to MongoDB...');
+  console.log('MongoDB URI (first 10 chars):', MONGODB_URI.substring(0, 10) + '...');
+  
+  try {
+    // We're explicitly setting the dbName here, even though it might be in the URI
+    cached.promise = cached.promise || mongoose.connect(MONGODB_URI, {
+      bufferCommands: false,
+    })
 
-  cached.promise = cached.promise || mongoose.connect(MONGODB_URI, {
-    dbName: 'events',
-    bufferCommands: false,
-  })
-
-  cached.conn = await cached.promise;
-
-  return cached.conn;
+    cached.conn = await cached.promise;
+    console.log('MongoDB connection successful, state:', mongoose.connection.readyState);
+    return cached.conn;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
 }

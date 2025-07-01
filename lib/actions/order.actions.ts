@@ -16,6 +16,17 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
   const price = order.isFree ? 0 : Number(order.price) * 100;
 
   try {
+    // Find user by clerkId to get MongoDB _id
+    await connectToDatabase();
+    // console.log('Looking for user with buyerId:', order.buyerId);
+    
+    const user = await User.findOne({ clerkId: order.buyerId });
+    // console.log('Found user:', user ? 'Yes' : 'No');
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -31,11 +42,11 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
       ],
       metadata: {
         eventId: order.eventId,
-        buyerId: order.buyerId,
+        buyerId: user._id.toString(),
       },
       mode: 'payment',
-      success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile`,
-      cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/`,
+      success_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/profile?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/?canceled=true`,
     });
 
     redirect(session.url!)
@@ -121,8 +132,14 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
   try {
     await connectToDatabase()
 
+    // Find user by clerkId to get their MongoDB _id
+    const user = await User.findOne({ clerkId: userId })
+    if (!user) {
+      return { data: [], totalPages: 0 }
+    }
+
     const skipAmount = (Number(page) - 1) * limit
-    const conditions = { buyer: userId }
+    const conditions = { buyer: user._id }
 
     const orders = await Order.distinct('event._id')
       .find(conditions)

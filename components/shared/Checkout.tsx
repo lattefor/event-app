@@ -11,6 +11,9 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
   useEffect(() => {
     // Check to see if this is a redirect back from Checkout
     const query = new URLSearchParams(window.location.search);
+
+    // console.log("query ------------------", query)
+
     if (query.get('success')) {
       console.log('Order placed! You will receive an email confirmation.');
     }
@@ -35,7 +38,7 @@ const Checkout = ({ event, userId }: { event: IEvent, userId: string }) => {
   return (
     <form action={onCheckout} method="post">
       <Button type="submit" role="link" size="lg" className="button sm:w-fit">
-        {event.isFree ? 'Get Ticket' : 'Buy Ticket'}
+        {event.isFree ? 'Get Ticket CO' : 'Buy Ticket'}
       </Button>
     </form>
   )
