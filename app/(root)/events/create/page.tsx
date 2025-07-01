@@ -3,6 +3,10 @@ import { auth } from "@clerk/nextjs";
 
 const CreateEvent = () => {
   const { userId } = auth();
+  
+  if (!userId) {
+    throw new Error('Unauthorized');
+  }
 
 
   return (

@@ -216,3 +216,48 @@ const events = await Event.find({ organizer: user._id });
 2. Test user creation flow thoroughly
 3. Ensure proper error handling for missing users
 4. Update this README for any architectural changes
+
+
+
+## Test Before Production
+
+1. Build Locally (Recommended)
+# This runs the same checks as production
+npm run build
+
+# If build succeeds, test the production build
+npm run start
+
+2. TypeScript Check
+# Check TypeScript errors without building
+npx tsc --noEmit
+
+3. Lint Check
+# Check for code issues
+npm run lint
+
+## Why Dev vs Prod Difference?
+* Development: Next.js shows TypeScript errors as warnings but continues running
+* Production: Next.js treats TypeScript errors as build failures and stops
+Best Practice Workflow:
+# Before pushing to production:
+npm run build    # ← This catches production issues
+npm run lint     # ← This catches code quality issues
+npx tsc --noEmit # ← This catches TypeScript issues
+
+# If all pass, then push
+git push
+
+## Pro Tip:
+Add this to your package.json scripts:
+
+{
+  "scripts": {
+    "check": "npm run build && npm run lint && npx tsc --noEmit",
+    "pre-deploy": "npm run check"
+  }
+}
+
+
+Then just run:
+npm run pre-deploy

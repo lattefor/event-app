@@ -10,6 +10,11 @@ type UpdateEventProps = {
 
 const UpdateEvent = async ({ params: { id } }: UpdateEventProps) => {
   const { userId } = auth();
+  
+  if (!userId) {
+    throw new Error('Unauthorized');
+  }
+  
   const event = await getEventById(id)
 
   return (

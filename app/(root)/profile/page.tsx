@@ -14,6 +14,10 @@ const ProfilePage = async ({ searchParams }: SearchParamProps) => {
 
     // 1. Get the ID of specific user
     const { userId } = auth();
+    
+    if (!userId) {
+      throw new Error('Unauthorized');
+    }
 
     const ordersPage = Number(searchParams?.ordersPage) || 1;
     const eventsPage = Number(searchParams?.eventsPage) || 1;
