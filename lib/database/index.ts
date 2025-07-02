@@ -20,6 +20,12 @@ export const connectToDatabase = async () => {
 
     cached.conn = await cached.promise;
     console.log('MongoDB connection successful, state:', mongoose.connection.readyState);
+    console.log('Connected to database:', mongoose.connection.name);
+    console.log('Full connection details:', {
+      host: mongoose.connection.host,
+      port: mongoose.connection.port,
+      name: mongoose.connection.name
+    });
     return cached.conn;
   } catch (error) {
     console.error('MongoDB connection error:', error);

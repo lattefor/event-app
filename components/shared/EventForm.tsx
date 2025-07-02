@@ -328,7 +328,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             />
         </div>
 
-        <Button type="submit">Submit Test</Button>
+        <Button type="submit">{type === 'Update' ? 'Update' : 'Submit'}</Button>
       </form>
     </Form>
   )
