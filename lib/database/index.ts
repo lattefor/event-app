@@ -11,6 +11,8 @@ export const connectToDatabase = async () => {
   
   console.log('Connecting to MongoDB...');
   console.log('MongoDB URI (first 10 chars):', MONGODB_URI.substring(0, 10) + '...');
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+  console.log('Full MongoDB URI:', MONGODB_URI); // Temporary - remove after debugging
   
   try {
     // We're explicitly setting the dbName here, even though it might be in the URI
