@@ -34,6 +34,7 @@ type EventFormProps = {
 const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
 
     const [files, setFiles] = useState<File[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
     const initialValues = event && type === 'Update' 
     ? { 
       ...event, 
@@ -55,23 +56,30 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
     
     // 2. Define a submit handler.
     async function onSubmit(values: z.infer<typeof eventFormSchema>) {
+      setIsSubmitting(true);
+      
+      // Set timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        setIsSubmitting(false);
+        alert('Request timed out. Please try again.');
+      }, 30000); // 30 seconds timeout
+      
+      try {
+        let uploadedImageUrl = values.imageUrl;
 
-      console.log("onSumit called..... ");
-      let uploadedImageUrl = values.imageUrl;
+        if(files.length > 0) {
+          const uploadedImages = await startUpload(files)
 
-      if(files.length > 0) {
-        const uploadedImages = await startUpload(files)
+          if(!uploadedImages) {
+            clearTimeout(timeoutId);
+            setIsSubmitting(false);
+            return
+          }
 
-        if(!uploadedImages) {
-          return
+          uploadedImageUrl = uploadedImages[0].url
         }
 
-        uploadedImageUrl = uploadedImages[0].url
-      }
-
-      if(type === 'Create') {
-              console.log("Create called..... ");
-        try {
+        if(type === 'Create') {
           const newEvent = await createEvent({
             event: { ...values, imageUrl: uploadedImageUrl },
             userId,
@@ -79,34 +87,37 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
           })
 
           if(newEvent) {
+            clearTimeout(timeoutId);
             form.reset();
             router.push(`/events/${newEvent._id}`)
           }
-        } catch (error) {
-          console.log(error);
         }
-      }
 
-      if(type === 'Update') {
-        if(!eventId) {
-          router.back()
-          return;
-        }
-  
-        try {
+        if(type === 'Update') {
+          if(!eventId) {
+            clearTimeout(timeoutId);
+            router.back()
+            return;
+          }
+    
           const updatedEvent = await updateEvent({
             userId,
             event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
             path: `/events/${eventId}`
           })
-  
+    
           if(updatedEvent) {
+            clearTimeout(timeoutId);
             form.reset();
             router.push(`/events/${updatedEvent._id}`)
           }
-        } catch (error) {
-          console.log(error);
         }
+      } catch (error) {
+        console.log(error);
+        alert('Something went wrong. Please try again.');
+      } finally {
+        clearTimeout(timeoutId);
+        setIsSubmitting(false);
       }
     }
 
@@ -328,8 +339,21 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             />
         </div>
 
-        <Button type="submit">{type === 'Update' ? 'Update' : 'Submit'}</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Please wait...' : (type === 'Update' ? 'Update' : 'Submit')}
+        </Button>
       </form>
+      
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <div className="flex items-center space-x-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+              <span>Processing your request...</span>
+            </div>
+          </div>
+        </div>
+      )}
     </Form>
   )
 }

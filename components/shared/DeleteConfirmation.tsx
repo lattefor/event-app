@@ -25,7 +25,7 @@ export const DeleteConfirmation = ({ eventId }: { eventId: string }) => {
   return (
     <AlertDialog>
       <AlertDialogTrigger>
-        <Image src="/assets/icons/delete.svg" alt="edit" width={20} height={20} />
+        <Image src="/assets/icons/delete.svg" alt="edit" width={24} height={24} />
       </AlertDialogTrigger>
 
       <AlertDialogContent className="bg-white">
