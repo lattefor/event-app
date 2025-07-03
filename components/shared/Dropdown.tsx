@@ -25,7 +25,7 @@ import { createCategory, getAllCategories } from "@/lib/actions/category.actions
 
 type DropdownProps = {
     value?: string 
-    onChangeHandler?: () => void    // optional function that returns nothing
+    onChangeHandler?: (value: string) => void    // function that takes a string value
 }
 
 const Dropdown = ({value, onChangeHandler}: DropdownProps) => {
@@ -40,6 +40,8 @@ const Dropdown = ({value, onChangeHandler}: DropdownProps) => {
       })
         .then((category) => {
           setCategories((prevState) => [...prevState, category])
+          // Set the newly created category as selected
+          onChangeHandler && onChangeHandler(category._id)
         })
     }
   
@@ -54,7 +56,7 @@ const Dropdown = ({value, onChangeHandler}: DropdownProps) => {
     }, [])
 
   return (
-    <Select onValueChange={onChangeHandler} defaultValue={value}>
+    <Select onValueChange={onChangeHandler} value={value}>
         <SelectTrigger className="select-field">
             <SelectValue placeholder="Category" />
         </SelectTrigger>
