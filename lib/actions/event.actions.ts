@@ -38,7 +38,16 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
       throw new Error('User not found. Please refresh the page and try again.')
     }
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: organizer._id })
+    // Convert Date objects to UTC for storage
+    const eventData = {
+      ...event,
+      category: event.categoryId,
+      organizer: organizer._id,
+      startDateTime: new Date(event.startDateTime).toISOString(),
+      endDateTime: new Date(event.endDateTime).toISOString()
+    };
+    
+    const newEvent = await Event.create(eventData)
     revalidatePath(path)
 
     return JSON.parse(JSON.stringify(newEvent))
@@ -78,9 +87,17 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
       throw new Error('Unauthorized or event not found')
     }
 
+    // Convert Date objects to UTC for storage
+    const eventData = {
+      ...event,
+      category: event.categoryId,
+      startDateTime: new Date(event.startDateTime).toISOString(),
+      endDateTime: new Date(event.endDateTime).toISOString()
+    };
+    
     const updatedEvent = await Event.findByIdAndUpdate(
       event._id,
-      { ...event, category: event.categoryId },
+      eventData,
       { new: true }
     )
     

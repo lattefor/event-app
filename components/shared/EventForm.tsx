@@ -85,16 +85,8 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
         }
 
         if(type === 'Create') {
-          // Convert local times to UTC before saving
-          const eventData = {
-            ...values,
-            imageUrl: uploadedImageUrl,
-            startDateTime: values.startDateTime.toISOString(),
-            endDateTime: values.endDateTime.toISOString()
-          };
-          
           const newEvent = await createEvent({
-            event: eventData,
+            event: { ...values, imageUrl: uploadedImageUrl },
             userId,
             path: '/profile'
           })
@@ -113,18 +105,9 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             return;
           }
     
-          // Convert local times to UTC before saving
-          const eventData = {
-            ...values,
-            imageUrl: uploadedImageUrl,
-            _id: eventId,
-            startDateTime: values.startDateTime.toISOString(),
-            endDateTime: values.endDateTime.toISOString()
-          };
-          
           const updatedEvent = await updateEvent({
             userId,
-            event: eventData,
+            event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
             path: `/events/${eventId}`
           })
     
