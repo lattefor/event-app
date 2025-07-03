@@ -35,9 +35,14 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
 
     const [files, setFiles] = useState<File[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
+    
+    // Get user's timezone for display
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
     const initialValues = event && type === 'Update' 
     ? { 
       ...event, 
+      // Convert UTC times from database to local time for display
       startDateTime: new Date(event.startDateTime), 
       endDateTime: new Date(event.endDateTime),
       categoryId: event.category._id
@@ -80,8 +85,16 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
         }
 
         if(type === 'Create') {
+          // Convert local times to UTC before saving
+          const eventData = {
+            ...values,
+            imageUrl: uploadedImageUrl,
+            startDateTime: values.startDateTime.toISOString(),
+            endDateTime: values.endDateTime.toISOString()
+          };
+          
           const newEvent = await createEvent({
-            event: { ...values, imageUrl: uploadedImageUrl },
+            event: eventData,
             userId,
             path: '/profile'
           })
@@ -100,9 +113,18 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
             return;
           }
     
+          // Convert local times to UTC before saving
+          const eventData = {
+            ...values,
+            imageUrl: uploadedImageUrl,
+            _id: eventId,
+            startDateTime: values.startDateTime.toISOString(),
+            endDateTime: values.endDateTime.toISOString()
+          };
+          
           const updatedEvent = await updateEvent({
             userId,
-            event: { ...values, imageUrl: uploadedImageUrl, _id: eventId },
+            event: eventData,
             path: `/events/${eventId}`
           })
     
@@ -232,6 +254,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
+                        placeholderText={`Your timezone: ${userTimezone}`}
                       />
                     </div>
 
@@ -263,6 +286,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
                         timeInputLabel="Time:"
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
+                        placeholderText={`Your timezone: ${userTimezone}`}
                       />
                     </div>
 

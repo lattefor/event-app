@@ -141,8 +141,7 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
     const skipAmount = (Number(page) - 1) * limit
     const conditions = { buyer: user._id }
 
-    const orders = await Order.distinct('event._id')
-      .find(conditions)
+    const orders = await Order.find(conditions)
       .sort({ createdAt: 'desc' })
       .skip(skipAmount)
       .limit(limit)
@@ -155,10 +154,14 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
           select: '_id firstName lastName',
         },
       })
+      .lean()
+    
+    // Filter out orders with missing events
+    const validOrders = orders.filter(order => order.event && order.event._id)
 
-    const ordersCount = await Order.distinct('event._id').countDocuments(conditions)
+    const ordersCount = await Order.countDocuments(conditions)
 
-    return { data: JSON.parse(JSON.stringify(orders)), totalPages: Math.ceil(ordersCount / limit) }
+    return { data: JSON.parse(JSON.stringify(validOrders)), totalPages: Math.ceil(ordersCount / limit) }
   } catch (error) {
     handleError(error)
   }
