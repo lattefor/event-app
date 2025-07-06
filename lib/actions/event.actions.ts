@@ -32,6 +32,11 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
   try {
     await connectToDatabase()
 
+    // Validate categoryId
+    if (!event.categoryId || event.categoryId.trim() === '') {
+      throw new Error('Category is required')
+    }
+
     // Find user by clerkId instead of MongoDB _id
     const organizer = await User.findOne({ clerkId: userId })
     if (!organizer) {

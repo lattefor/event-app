@@ -85,6 +85,12 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
         }
 
         if(type === 'Create') {
+          // Validate required fields
+          if (!values.categoryId || values.categoryId.trim() === '') {
+            alert('Please select a category');
+            return;
+          }
+          
           const newEvent = await createEvent({
             event: { ...values, imageUrl: uploadedImageUrl },
             userId,
@@ -102,6 +108,12 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
           if(!eventId) {
             clearTimeout(timeoutId);
             router.back()
+            return;
+          }
+          
+          // Validate required fields
+          if (!values.categoryId || values.categoryId.trim() === '') {
+            alert('Please select a category');
             return;
           }
     
