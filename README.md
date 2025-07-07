@@ -261,3 +261,20 @@ Add this to your package.json scripts:
 
 Then just run:
 npm run pre-deploy
+
+
+## Test Structure:
+__tests__/
+├── components/           # Component tests
+│   ├── EventForm.test.tsx
+│   └── Dropdown.test.tsx
+├── api/                  # API route tests
+│   ├── webhooks.test.ts
+│   └── events.test.ts
+├── lib/                  # Utility/action tests
+│   ├── actions/
+│   └── utils.test.ts
+└── setup/               # Test configuration
+    └── jest.setup.js
+
+    
