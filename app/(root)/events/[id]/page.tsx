@@ -1,10 +1,10 @@
 import CheckoutButton from '@/components/shared/CheckoutButton';
 import Collection from '@/components/shared/Collection';
 import { getEventById, getRelatedEventsByCategory } from '@/lib/actions/event.actions'
-import { formatDateTime } from '@/lib/utils';
 import { SearchParamProps } from '@/types'
 import { auth } from '@clerk/nextjs';
 import Image from 'next/image';
+import ClientDateTime from '@/components/shared/ClientDateTime';
 
 const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) => {
   const event = await getEventById(id);
@@ -60,12 +60,12 @@ const EventDetails = async ({ params: { id }, searchParams }: SearchParamProps) 
               <Image src="/assets/icons/calendar.svg" alt="calendar" width={32} height={32} />
               <div className="p-medium-16 lg:p-regular-20 flex flex-wrap items-center">
                 <p>
-                  {formatDateTime(event.startDateTime).dateOnly} - {' '}
-                  {formatDateTime(event.startDateTime).timeOnly}
+                  <ClientDateTime date={event.startDateTime} showDateOnly /> - {' '}
+                  <ClientDateTime date={event.startDateTime} showTimeOnly />
                 </p>
                 <p>
-                  {formatDateTime(event.endDateTime).dateOnly} -  {' '}
-                  {formatDateTime(event.endDateTime).timeOnly}
+                  <ClientDateTime date={event.endDateTime} showDateOnly /> - {' '}
+                  <ClientDateTime date={event.endDateTime} showTimeOnly />
                 </p>
               </div>
             </div>

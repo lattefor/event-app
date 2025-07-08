@@ -1,10 +1,10 @@
 import { IEvent } from "@/lib/database/models/event.model";
-import { formatDateTime } from "@/lib/utils";
 import { auth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 import { DeleteConfirmation } from "./DeleteConfirmation";
+import ClientDateTime from "./ClientDateTime";
 
 type CardProps = {
   event: IEvent;
@@ -50,7 +50,7 @@ const Card = ({ event, hasOrderLink, hidePrice }: CardProps) => {
         )}
 
         <p className="p-medium-16 p-medium-18 text-grey-500">
-          {formatDateTime(event.startDateTime).dateTime}
+          <ClientDateTime date={event.startDateTime} />
         </p>
 
         <Link href={`/events/${event._id}`}>
