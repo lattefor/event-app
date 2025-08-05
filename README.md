@@ -1,25 +1,29 @@
 # Evently - Modern Event Management Platform
 
-A full-stack event management platform built with Next.js 14, featuring user authentication, event creation, ticket purchasing, and payment processing.
+A full-stack event management platform built with Next.js 14, featuring user authentication, event creation, ticket purchasing, and payment processing with global timezone support.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
 - **Authentication**: Clerk
 - **Database**: MongoDB with Mongoose
-- **Payments**: Stripe
+- **Payments**: Stripe with Webhooks
 - **File Upload**: UploadThing
-- **Deployment**: Vercel-ready
+- **Testing**: Jest + React Testing Library
+- **Deployment**: Vercel
 
 ## Key Features
 
 - 🔐 User authentication with Clerk
-- 📅 Event creation and management
-- 🎫 Ticket purchasing with Stripe
+- 📅 Event creation and management with form validation
+- 🎫 Ticket purchasing with Stripe integration
 - 🖼️ Image upload for events
 - 📱 Responsive design
 - 🔍 Event search and filtering
 - 👤 User profile and dashboard
+- 🌍 Global timezone support (client-side rendering)
+- ⚡ Loading states and error handling
+- 🧪 Comprehensive test suite
 
 ## Architecture Overview
 
@@ -52,10 +56,21 @@ const mongoId = user._id; // MongoDB ObjectId
 ```
 User Signs Up → Clerk → UserCreator Component → MongoDB User Record
      ↓
-User Creates Event → Event Actions → Find User by clerkId → Store MongoDB _id
+User Creates Event → Form Validation → Event Actions → Store with UTC timestamps
      ↓
-User Buys Ticket → Stripe → Order with MongoDB user._id
+User Buys Ticket → Stripe Checkout → Webhook → Order Creation → MongoDB
+     ↓
+Display Events → Client-side Timezone Conversion → Local Time Display
 ```
+
+### Timezone Handling
+
+The application implements global timezone support:
+
+1. **Storage**: All timestamps stored as UTC in MongoDB
+2. **Input**: User selects times in their local timezone
+3. **Display**: Client-side conversion to user's local timezone
+4. **Components**: `ClientDateTime` component handles timezone-aware rendering
 
 ## Environment Variables
 
@@ -76,6 +91,7 @@ MONGODB_URI=mongodb+srv://...
 # Stripe
 STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 
 # UploadThing
 UPLOADTHING_SECRET=sk_live_...
@@ -112,15 +128,28 @@ npm run dev
 │   │   ├── events/          # Event pages
 │   │   └── profile/         # User profile
 │   ├── api/                 # API routes
+│   │   ├── webhooks/stripe/ # Stripe webhook endpoint
+│   │   └── test-order/      # Test endpoint
 │   └── layout.tsx           # Root layout with UserCreator
+├── __tests__/               # Test suite
+│   ├── components/          # Component tests
+│   ├── api/                 # API tests
+│   └── lib/                 # Utility tests
 ├── components/
 │   ├── shared/              # Reusable components
+│   │   ├── ClientDateTime.tsx # Timezone-aware component
+│   │   ├── EventForm.tsx    # Form with validation
+│   │   └── Dropdown.tsx     # Category dropdown
 │   └── ui/                  # UI components
 ├── lib/
 │   ├── actions/             # Server actions
 │   ├── database/            # MongoDB models
-│   └── utils.ts             # Utilities
-└── types/                   # TypeScript types
+│   ├── utils.ts             # Utilities with timezone support
+│   └── validator.ts         # Zod schemas
+├── types/                   # TypeScript types
+├── jest.config.js           # Jest configuration
+├── jest.setup.js            # Test setup
+└── middleware.ts            # Clerk middleware
 ```
 
 ## Key Components
@@ -147,16 +176,30 @@ Automatically creates MongoDB user records when users sign in:
 
 ### Payment Processing
 - Stripe integration for ticket purchases
-- Automatic order creation in MongoDB
+- **Stripe webhooks** for reliable order creation
+- Automatic order creation in MongoDB via webhook
 - Success/cancel handling on profile page
+- Loading states during form submission
+
+### Form Validation
+- Zod schema validation for all forms
+- Real-time validation feedback
+- Category selection validation
+- Image upload requirements
+
+### Timezone Support
+- **ClientDateTime component** for timezone-aware rendering
+- UTC storage in database
+- Client-side timezone conversion
+- Consistent time display across global users
 
 ## Important Notes
 
-### No Webhooks Used
-This application **does not use Clerk webhooks**. Instead:
-- User creation happens client-side via `UserCreator` component
-- More reliable than webhook dependencies
-- Simpler debugging and development
+### Webhook Strategy
+- **No Clerk webhooks**: User creation via client-side `UserCreator` component
+- **Stripe webhooks**: Essential for reliable payment processing
+- Webhook endpoint: `/api/webhooks/stripe`
+- Handles `checkout.session.completed` events
 
 ### ID Consistency
 Always remember the ID conversion pattern:
@@ -173,8 +216,20 @@ Always remember the ID conversion pattern:
 2. **Payment failures**
    - Ensure user exists in MongoDB before checkout
    - Check Stripe keys in environment variables
+   - Verify webhook endpoint is accessible: `/api/webhooks/stripe`
+   - Check middleware allows webhook route (no auth required)
 
-3. **Image upload issues**
+3. **Timezone display issues**
+   - Use `ClientDateTime` component for date display
+   - Avoid server-side date formatting
+   - Check client-side hydration
+
+4. **Form validation errors**
+   - Ensure category is selected before submission
+   - Check Zod schema validation rules
+   - Verify all required fields are filled
+
+5. **Image upload issues**
    - Verify UploadThing configuration
    - Check file size limits (4MB max)
 
@@ -203,78 +258,136 @@ const user = await User.findOne({ clerkId: userId });
 const events = await Event.find({ organizer: user._id });
 ```
 
+## Testing
+
+The application includes a comprehensive test suite:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run specific test
+npm test -- Card.test.tsx
+```
+
+### Test Structure
+```
+__tests__/
+├── components/           # Component tests
+│   ├── footer.test.tsx
+│   └── simple.test.tsx
+├── api/                  # API route tests
+│   └── simple-order.test.ts
+└── lib/                  # Utility tests
+    ├── utils.test.ts
+    └── validator.test.ts
+```
+
+### Testing Strategy
+- **Component tests**: React Testing Library for UI components
+- **API tests**: Mock external dependencies (Stripe, MongoDB)
+- **Utility tests**: Pure function testing
+- **Validation tests**: Zod schema validation
+
 ## Deployment
 
-1. Deploy to Vercel or similar platform
-2. Update `NEXT_PUBLIC_SERVER_URL` to production URL
-3. Configure production database and API keys
-4. Test authentication and payment flows
+### Pre-deployment Checklist
+```bash
+# Test build locally
+npm run build
+npm run start
+
+# Run all tests
+npm test
+
+# Type checking
+npx tsc --noEmit
+
+# Linting
+npm run lint
+```
+
+### Production Setup
+1. Deploy to Vercel
+2. Configure environment variables in Vercel dashboard
+3. Set up Stripe webhook endpoint: `https://your-app.vercel.app/api/webhooks/stripe`
+4. Update `NEXT_PUBLIC_SERVER_URL` to production URL
+5. Test payment flow end-to-end
+
+### Stripe Webhook Configuration
+1. Go to Stripe Dashboard → Webhooks
+2. Add endpoint: `https://your-app.vercel.app/api/webhooks/stripe`
+3. Select event: `checkout.session.completed`
+4. Copy webhook signing secret to `STRIPE_WEBHOOK_SECRET`
+
+## Development Best Practices
+
+### Code Quality
+```bash
+# Pre-commit checks
+npm run build    # Catches production issues
+npm run lint     # Code quality
+npx tsc --noEmit # TypeScript errors
+npm test         # Run test suite
+```
+
+### Timezone Handling
+- Always use `ClientDateTime` component for displaying dates
+- Store all timestamps as UTC in database
+- Let client-side handle timezone conversion
+
+### Form Development
+- Use Zod schemas for validation
+- Add loading states for better UX
+- Handle timeout scenarios (30-second limit)
+- Validate required fields client and server-side
+
+### Payment Integration
+- Test with Stripe test cards: `4242 4242 4242 4242`
+- Always verify webhook endpoints are accessible
+- Check orders appear in user profile after purchase
+- Handle both success and failure scenarios
+
+## Troubleshooting
+
+### Database Issues
+```typescript
+// Debug database connection
+console.log('Connected to database:', mongoose.connection.name);
+
+// Check user conversion
+const user = await User.findOne({ clerkId: userId });
+console.log('MongoDB user:', user);
+```
+
+### Timezone Issues
+- Check if using `ClientDateTime` component
+- Verify client-side hydration is working
+- Test across different timezones
+
+### Payment Issues
+- Check Vercel function logs for webhook calls
+- Verify Stripe webhook endpoint returns 200
+- Ensure middleware allows webhook route
+- Test webhook signature verification
+
+### Test Issues
+- Run `npm test` to see current test status
+- Check Jest configuration for module resolution
+- Verify mocks are properly set up
 
 ## Contributing
 
 1. Follow the ID conversion patterns
-2. Test user creation flow thoroughly
-3. Ensure proper error handling for missing users
-4. Update this README for any architectural changes
+2. Use `ClientDateTime` for all date displays
+3. Add tests for new features
+4. Validate forms with Zod schemas
+5. Handle loading states and errors
+6. Update this README for architectural changes
 
+---
 
-
-## Test Before Production
-
-1. Build Locally (Recommended)
-# This runs the same checks as production
-npm run build
-
-# If build succeeds, test the production build
-npm run start
-
-2. TypeScript Check
-# Check TypeScript errors without building
-npx tsc --noEmit
-
-3. Lint Check
-# Check for code issues
-npm run lint
-
-## Why Dev vs Prod Difference?
-* Development: Next.js shows TypeScript errors as warnings but continues running
-* Production: Next.js treats TypeScript errors as build failures and stops
-Best Practice Workflow:
-# Before pushing to production:
-npm run build    # ← This catches production issues
-npm run lint     # ← This catches code quality issues
-npx tsc --noEmit # ← This catches TypeScript issues
-
-# If all pass, then push
-git push
-
-## Pro Tip:
-Add this to your package.json scripts:
-
-{
-  "scripts": {
-    "check": "npm run build && npm run lint && npx tsc --noEmit",
-    "pre-deploy": "npm run check"
-  }
-}
-
-
-Then just run:
-npm run pre-deploy
-
-
-## Test Structure:
-__tests__/
-├── components/           # Component tests
-│   ├── EventForm.test.tsx
-│   └── Dropdown.test.tsx
-├── api/                  # API route tests
-│   ├── webhooks.test.ts
-│   └── events.test.ts
-├── lib/                  # Utility/action tests
-│   ├── actions/
-│   └── utils.test.ts
-└── setup/               # Test configuration
-    └── jest.setup.js
-
-    
+**Built with ❤️ using Next.js 14, TypeScript, and modern web technologies.**
