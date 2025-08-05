@@ -238,6 +238,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
                         placeholderText={`Your timezone: ${userTimezone}`}
+                        popperPlacement="top"
                       />
                     </div>
 
@@ -270,6 +271,7 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
                         dateFormat="MM/dd/yyyy h:mm aa"
                         wrapperClassName="datePicker"
                         placeholderText={`Your timezone: ${userTimezone}`}
+                        popperPlacement="top"
                       />
                     </div>
 

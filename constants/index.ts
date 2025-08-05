@@ -2,14 +2,17 @@ export const headerLinks = [
   {
     label: 'Home',
     route: '/',
+    requiresAuth: false,
   },
   {
     label: 'Create Event',
     route: '/events/create',
+    requiresAuth: true,
   },
   {
     label: 'My Profile',
     route: '/profile',
+    requiresAuth: true,
   },
 ]
 
