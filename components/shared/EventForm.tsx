@@ -93,8 +93,9 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
 
           if(newEvent) {
             clearTimeout(timeoutId);
-            form.reset();
+            // Don't reset form or hide spinner until navigation starts
             router.push(`/events/${newEvent._id}`)
+            return // Keep spinner visible during navigation
           }
         }
 
@@ -113,8 +114,9 @@ const EventForm = ({userId, type, event, eventId} : EventFormProps )=> {
     
           if(updatedEvent) {
             clearTimeout(timeoutId);
-            form.reset();
+            // Don't reset form or hide spinner until navigation starts
             router.push(`/events/${updatedEvent._id}`)
+            return // Keep spinner visible during navigation
           }
         }
       } catch (error) {
